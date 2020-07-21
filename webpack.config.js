@@ -24,7 +24,11 @@ const createDefinePlugin = (type) => {
 const basePlugins = [
   new webpack.optimize.ModuleConcatenationPlugin(),
   new webpack.optimize.OccurrenceOrderPlugin(),
-  new webpack.BannerPlugin({ entryOnly: true, raw: true, banner: 'typeof window !== "undefined" &&' }) // SSR/Node.js guard
+  new webpack.BannerPlugin({
+    entryOnly: true,
+    raw: true,
+    banner: 'typeof window !== "undefined" &&'
+  }) // SSR/Node.js guard
 ];
 const mainPlugins = [...basePlugins, createDefinePlugin('main')];
 const lightPlugins = [...basePlugins, createDefinePlugin('light')];
@@ -44,41 +48,57 @@ const baseConfig = {
     rules: [
       {
         test: /\.(ts|js)$/,
-        exclude: [
-          path.resolve(__dirname, 'node_modules')
-        ],
+        exclude: [path.resolve(__dirname, 'node_modules')],
         loader: 'babel-loader',
         options: {
           babelrc: false,
           presets: [
             '@babel/preset-typescript',
-            ['@babel/preset-env', {
-              loose: true,
-              modules: false,
-              targets: {
-                browsers: [
-                  'chrome >= 47',
-                  'firefox >= 51',
-                  'ie >= 11',
-                  'safari >= 8',
-                  'ios >= 8',
-                  'android >= 4'
-                ]
+            [
+              '@babel/preset-env',
+              {
+                loose: true,
+                modules: false,
+                targets: {
+                  browsers: [
+                    'chrome >= 47',
+                    'firefox >= 51',
+                    'ie >= 11',
+                    'safari >= 8',
+                    'ios >= 8',
+                    'android >= 4'
+                  ]
+                }
               }
-            }]
+            ]
           ],
           plugins: [
-            ['@babel/plugin-proposal-class-properties', {
-              loose: true
-            }],
+            [
+              '@babel/plugin-proposal-class-properties',
+              {
+                loose: true
+              }
+            ],
             '@babel/plugin-proposal-object-rest-spread',
             {
               visitor: {
                 CallExpression: function (espath) {
                   if (espath.get('callee').matchesPattern('Number.isFinite')) {
-                    espath.node.callee = importHelper.addNamed(espath, 'isFiniteNumber', path.resolve('src/polyfills/number'));
-                  } else if (espath.get('callee').matchesPattern('Number.MAX_SAFE_INTEGER')) {
-                    espath.node.callee = importHelper.addNamed(espath, 'MAX_SAFE_INTEGER', path.resolve('src/polyfills/number'));
+                    espath.node.callee = importHelper.addNamed(
+                      espath,
+                      'isFiniteNumber',
+                      path.resolve('src/polyfills/number')
+                    );
+                  } else if (
+                    espath
+                      .get('callee')
+                      .matchesPattern('Number.MAX_SAFE_INTEGER')
+                  ) {
+                    espath.node.callee = importHelper.addNamed(
+                      espath,
+                      'MAX_SAFE_INTEGER',
+                      path.resolve('src/polyfills/number')
+                    );
                   }
                 }
               }
@@ -219,16 +239,23 @@ const multiConfig = [
     plugins: [
       ...mainPlugins,
       new webpack.DefinePlugin({
-      __NETLIFY__: JSON.stringify(process.env.NETLIFY === 'true' ? {
-          branch: process.env.BRANCH,
-          commitRef: process.env.COMMIT_REF,
-          reviewID: process.env.PULL_REQUEST === 'true' ? parseInt(process.env.REVIEW_ID) : null
-        } : {})
+        __NETLIFY__: JSON.stringify(
+          process.env.NETLIFY === 'true'
+            ? {
+                branch: process.env.BRANCH,
+                commitRef: process.env.COMMIT_REF,
+                reviewID:
+                  process.env.PULL_REQUEST === 'true'
+                    ? parseInt(process.env.REVIEW_ID)
+                    : null
+              }
+            : {}
+        )
       })
     ],
     devtool: 'source-map'
   }
-].map(config => merge(baseConfig, config));
+].map((config) => merge(baseConfig, config));
 
 // webpack matches the --env arguments to a string; for example, --env.debug.min translates to { debug: true, min: true }
 module.exports = (envArgs) => {
@@ -239,14 +266,24 @@ module.exports = (envArgs) => {
   } else {
     const enabledConfigNames = Object.keys(envArgs);
     // Filter out enabled configs
-    const enabledConfigs = multiConfig.filter(config => enabledConfigNames.includes(config.name));
+    const enabledConfigs = multiConfig.filter((config) =>
+      enabledConfigNames.includes(config.name)
+    );
     if (!enabledConfigs.length) {
-      throw new Error(`Couldn't find a valid config with the names ${JSON.stringify(enabledConfigNames)}. Known configs are: ${multiConfig.map(config => config.name).join(', ')}`);
+      throw new Error(
+        `Couldn't find a valid config with the names ${JSON.stringify(
+          enabledConfigNames
+        )}. Known configs are: ${multiConfig
+          .map((config) => config.name)
+          .join(', ')}`
+      );
     }
 
     configs = enabledConfigs;
   }
 
-  console.log(`Building configs: ${configs.map(config => config.name).join(', ')}.\n`);
+  console.log(
+    `Building configs: ${configs.map((config) => config.name).join(', ')}.\n`
+  );
   return configs;
 };

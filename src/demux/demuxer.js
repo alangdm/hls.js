@@ -1,5 +1,5 @@
 import { EventEmitter } from 'eventemitter3';
-import * as work from 'webworkify-webpack';
+import work from 'webworkify-webpack';
 
 import Event from '../events';
 import DemuxerInline from '../demux/demuxer-inline';
@@ -123,8 +123,8 @@ class Demuxer {
   }
 
   onWorkerMessage (ev) {
-    let data = ev.data,
-      hls = this.hls;
+    let data = ev.data;
+      let hls = this.hls;
     switch (data.event) {
     case 'init':
       // revoke the Object URL that was used to create demuxer worker, so as not to leak it
